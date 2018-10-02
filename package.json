@@ -33,6 +33,7 @@
     "watch": "npm run build:react -- --watch"
   },
   "dependencies": {
+    "babel-plugin-react-sketchapp-svg": "^1.0.0-beta4",
     "@skpm/sketchapp-json-flow-types": "^0.2.1",
     "error-stack-parser": "^2.0.0",
     "invariant": "^2.2.2",

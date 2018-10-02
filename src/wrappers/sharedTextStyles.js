@@ -39,6 +39,24 @@ class TextStyles {
 
     const container = context.document.documentData().layerTextStyles();
 
+    let sharedStyle;
+
+    // Sketch < 50
+    if (container.addSharedStyleWithName_firstInstance) {
+      sharedStyle = container.addSharedStyleWithName_firstInstance(name, textStyle);
+    } else {
+      const allocator = MSSharedStyle.alloc();
+      // Sketch 50, 51
+      if (allocator.initWithName_firstInstance) {
+        sharedStyle = allocator.initWithName_firstInstance(name, textStyle);
+      } else {
+        sharedStyle = allocator.initWithName_style(name, textStyle);
+      }
+
+      container.addSharedObject(sharedStyle);
+    }
+
+    /*
     if (container.addSharedStyleWithName_firstInstance) {
       const s = container.addSharedStyleWithName_firstInstance(name, textStyle);
 
@@ -47,11 +65,14 @@ class TextStyles {
       // otherwise Sketch crashes
       return s.objectID();
     }
-    // addSharedStyleWithName_firstInstance was removed in Sketch 50
-    const s = MSSharedStyle.alloc().initWithName_firstInstance(name, textStyle);
-    container.addSharedObject(s);
+    */
 
-    return s.objectID();
+    // addSharedStyleWithName_firstInstance was removed in Sketch 50
+    // const s = MSSharedStyle.alloc().initWithName_firstInstance(name, textStyle);
+    // container.addSharedObject(s);
+
+    // return s.objectID();
+    return String(sharedStyle.objectID());
   }
 }
 
