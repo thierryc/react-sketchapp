@@ -5,7 +5,9 @@ export type Dictionary<K, T> = { [key: K]: T };
 // Sketchy things
 export type SketchLayer = any;
 
-export type SketchStyle = any;
+export type WrappedSketchLayer = {
+  sketchObject: SketchLayer,
+};
 
 export type MSArray<T> = {
   [key: number]: T,
@@ -17,7 +19,10 @@ type NSString = any;
 export type SketchPage = {
   name: () => NSString,
   setName: string => void,
+  layers: () => Array<SketchLayer>,
 };
+
+export type SketchStyle = any;
 
 export type SketchSharedStyleContainer = {
   setObjects: (objects: Array<SketchStyle>) => void,
@@ -37,14 +42,20 @@ export type SketchDocumentData = {
   layerTextStyles: () => SketchSharedStyleContainer,
   layerSymbols: () => void,
   removePageAtIndex: Function,
+  addBlankPage: () => SketchPage,
+  currentPage: () => SketchPage,
+  setCurrentPage: (page: SketchPage) => void,
+  pages: () => MSArray<SketchPage>,
+  symbolsPageOrCreateIfNecessary: () => SketchPage,
 };
 
 export type SketchDocument = {
-  addBlankPage: () => SketchPage,
-  currentPage: () => SketchPage,
   documentData: () => SketchDocumentData,
-  pages: () => MSArray<SketchPage>,
-  showMessage: Function,
+  showMessage: (message: string) => void,
+};
+
+export type WrappedSketchDocument = {
+  sketchObject: SketchDocument | SketchDocumentData,
 };
 
 export type SketchContext = {
@@ -76,7 +87,7 @@ export type LayoutInfo = {
   direction?: 'ltr' | 'rtl',
 };
 
-export type ViewStyle = {
+export type ViewStyle = {|
   color?: Color,
   shadowColor?: Color,
   shadowInner?: boolean,
@@ -151,15 +162,19 @@ export type ViewStyle = {
   borderBottomWidth?: number,
   borderLeftWidth?: number,
   opacity?: number,
-};
+  transform?: string,
+  transformOrigin?: string,
+|};
 
-export type TextStyle = {
+export type TextStyle = {|
   color?: Color,
   fontFamily?: string,
   fontSize?: number,
   fontStyle?: 'normal' | 'italic',
   fontWeight?: string,
   textDecoration?: string,
+  textShadowOpacity?: number,
+  textShadowSpread?: number,
   textShadowOffset?: { width: number, height: number },
   textShadowRadius?: number,
   textShadowColor?: Color,
@@ -167,8 +182,9 @@ export type TextStyle = {
   letterSpacing?: number,
   lineHeight?: number,
   textAlign?: 'auto' | 'left' | 'right' | 'center' | 'justify',
+  paragraphSpacing?: number,
   writingDirection?: 'auto' | 'ltr' | 'rtl',
-};
+|};
 
 export type TextNode = { content: string, textStyles: TextStyle };
 export type TextNodes = Array<TextNode>;
@@ -198,3 +214,14 @@ export type ResizeConstraints = {
   fixedHeight: boolean,
   fixedWidth: boolean,
 };
+
+export type SketchShadow = {
+  shadowColor: Color,
+  shadowOffset: { width: number, height: number },
+  shadowSpread: number,
+  shadowOpacity: number,
+  shadowRadius: number,
+  shadowInner: boolean,
+};
+
+export type SketchShadows = Array<SketchShadow>;

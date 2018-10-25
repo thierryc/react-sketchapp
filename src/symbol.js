@@ -2,7 +2,7 @@
 import * as React from 'react';
 import * as PropTypes from 'prop-types';
 import type { SJSymbolMaster } from 'sketchapp-json-flow-types';
-import { fromSJSONDictionary, toSJSON } from 'sketchapp-json-plugin';
+import { fromSJSONDictionary, toSJSON } from '@skpm/sketchapp-json-plugin';
 import StyleSheet from './stylesheet';
 import { generateID } from './jsonUtils/models';
 import ViewStylePropTypes from './components/ViewStylePropTypes';
@@ -10,7 +10,8 @@ import buildTree from './buildTree';
 import flexToSketchJSON from './flexToSketchJSON';
 import { renderLayers } from './render';
 import { resetLayer } from './resets';
-import { getDocumentFromContext } from './utils/getDocument';
+import { getDocumentDataFromContext } from './utils/getDocument';
+import type { SketchDocumentData, SketchDocument, WrappedSketchDocument } from './types';
 
 let id = 0;
 const nextId = () => ++id; // eslint-disable-line
@@ -23,7 +24,7 @@ const symbolsRegistry = {};
 let existingSymbols = [];
 const layers = {};
 
-const msListToArray = (pageList) => {
+const msListToArray = pageList => {
   const out = [];
   // eslint-disable-next-line
   for (let i = 0; i < pageList.length; i++) {
@@ -32,31 +33,47 @@ const msListToArray = (pageList) => {
   return out;
 };
 
-export const getSymbolsPage = (document: any) => {
-  const pages = document.pages();
-  const array = msListToArray(pages);
-  return array.find(p => String(p.name()) === 'Symbols');
+const getDocumentData = (
+  document?: SketchDocumentData | SketchDocument | WrappedSketchDocument,
+): SketchDocumentData => {
+  let nativeDocumentData: SketchDocumentData;
+  if (document && document.sketchObject) {
+    const nativeDocument = document.sketchObject;
+    // $FlowFixMe
+    nativeDocumentData = nativeDocument.documentData
+      ? nativeDocument.documentData()
+      : // $FlowFixMe
+        nativeDocument;
+  } else if (document) {
+    if (document.documentData) {
+      // $FlowFixMe
+      nativeDocumentData = document.documentData();
+    } else {
+      nativeDocumentData = document;
+    }
+  } else {
+    nativeDocumentData = getDocumentDataFromContext(context); // eslint-disable-line
+  }
+  // $FlowFixMe
+  return nativeDocumentData;
 };
 
-const getExistingSymbols = (document: any) => {
+const getSymbolsPage = (documentData: SketchDocumentData) =>
+  documentData.symbolsPageOrCreateIfNecessary();
+
+const getExistingSymbols = (documentData: SketchDocumentData) => {
   if (!hasInitialized) {
     hasInitialized = true;
 
-    let symbolsPage = getSymbolsPage(document);
-    if (!symbolsPage) {
-      const currentPage = document.currentPage();
-      symbolsPage = document.addBlankPage();
-      symbolsPage.setName('Symbols');
-      document.setCurrentPage(currentPage);
-    }
+    const symbolsPage = getSymbolsPage(documentData);
 
-    existingSymbols = msListToArray(symbolsPage.layers()).map((x) => {
+    existingSymbols = msListToArray(symbolsPage.layers()).map(x => {
       const symbolJson = JSON.parse(toSJSON(x));
       layers[symbolJson.symbolID] = x;
       return symbolJson;
     });
 
-    existingSymbols.forEach((symbolMaster) => {
+    existingSymbols.forEach(symbolMaster => {
       if (symbolMaster._class !== 'symbolMaster') return;
       if (symbolMaster.name in symbolsRegistry) return;
       symbolsRegistry[symbolMaster.name] = symbolMaster;
@@ -68,7 +85,7 @@ const getExistingSymbols = (document: any) => {
 const getSymbolID = (masterName: string): string => {
   let symbolId = generateID();
 
-  existingSymbols.forEach((symbolMaster) => {
+  existingSymbols.forEach(symbolMaster => {
     if (symbolMaster.name === masterName) {
       symbolId = symbolMaster.symbolID;
     }
@@ -76,18 +93,18 @@ const getSymbolID = (masterName: string): string => {
   return symbolId;
 };
 
-export const injectSymbols = (document: any) => {
-  if (!document) {
-    document = getDocumentFromContext(context); // eslint-disable-line
-  }
-  const currentPage = document.currentPage();
-
+export const injectSymbols = (
+  document?: SketchDocumentData | SketchDocument | WrappedSketchDocument,
+) => {
   // if hasInitialized is false then makeSymbol has not yet been called
   if (hasInitialized) {
-    const symbolsPage = document.documentData().symbolsPageOrCreateIfNecessary();
+    const documentData = getDocumentData(document);
+    const currentPage = documentData.currentPage();
+
+    const symbolsPage = getSymbolsPage(documentData);
 
     let left = 0;
-    Object.keys(symbolsRegistry).forEach((key) => {
+    Object.keys(symbolsRegistry).forEach(key => {
       const symbolMaster = symbolsRegistry[key];
       symbolMaster.frame.y = 0;
       symbolMaster.frame.x = left;
@@ -102,14 +119,16 @@ export const injectSymbols = (document: any) => {
 
     renderLayers(Object.keys(layers).map(k => layers[k]), symbolsPage);
 
-    document.setCurrentPage(currentPage);
+    documentData.setCurrentPage(currentPage);
   }
 };
 
 export const createSymbolInstanceClass = (symbolMaster: SJSymbolMaster): React.ComponentType<any> =>
   class extends React.Component<any> {
     static symbolID = symbolMaster.symbolID;
+
     static masterName = symbolMaster.name;
+
     static displayName = `SymbolInstance(${symbolMaster.name})`;
 
     static propTypes = {
@@ -135,10 +154,10 @@ export const createSymbolInstanceClass = (symbolMaster: SJSymbolMaster): React.C
 export const makeSymbol = (
   Component: React.ComponentType<any>,
   name: string,
-  document?: any,
+  document?: SketchDocumentData | SketchDocument | WrappedSketchDocument,
 ): React.ComponentType<any> => {
   if (!hasInitialized) {
-    getExistingSymbols(document || getDocumentFromContext(context));
+    getExistingSymbols(getDocumentData(document));
   }
 
   const masterName = name || displayName(Component);

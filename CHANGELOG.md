@@ -1,7 +1,27 @@
 # Change Log
 
-This project adheres to [Semantic Versioning](http://semver.org/).
-Every release, along with the migration instructions, is documented on the Github [Releases](https://github.com/airbnb/react-sketchapp/releases) page.
+This project adheres to [Semantic Versioning](http://semver.org/). Every release, along with the migration instructions, is documented on the Github [Releases](https://github.com/airbnb/react-sketchapp/releases) page.
+
+## Version 3.0.0-beta.1
+
+- Fix ShapeGroup on nodejs (#387)
+- Handle specifying document in injectSymbols (#388)
+- Fix support for paragraph spacing on sketch >= 49 (#390)
+
+## Version 3.0.0-beta.0
+
+- Add support for paragraph spacing (#382 - Thanks @lessthanzero!)
+- `Image` and `Text` now support multiple shadows just like `View`
+- add support for `TextShadow`
+- Experimental support for `transform`
+- Experimental support for running `react-sketchapp` on NodeJS
+
+## Version 2.1.0
+
+- Ensure `makeSymbol` does not change currentPage (#353 - Thanks @jaridmargolin!)
+- Fix Text decoration underline style (#370 - Thanks @thecalvinchan!)
+- Add possibility to add multiple shadows and shadow spread (#277 - Thanks @ludwigfrank and @thierryc!)
+- Support rendering into wrapped object (hence support the new Sketch API) (#379)
 
 ## Version 2.0.0
 
